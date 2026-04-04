@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Network.HTTP.Tower.Middleware.TestDouble
   ( withMock
   , withMockMap

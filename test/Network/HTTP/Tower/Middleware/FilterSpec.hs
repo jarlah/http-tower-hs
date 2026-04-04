@@ -16,7 +16,7 @@ spec = describe "Filter middleware" $ do
     it "allows matching requests through" $ do
       let svc :: Service HTTP.Request String
           svc = Service $ \_ -> pure (Right "ok")
-          filtered = withFilter (\_ -> True) svc
+          filtered = withFilter (const True) svc
       req <- HTTP.parseRequest "http://example.com"
       result <- runService filtered req
       result `shouldBe` Right "ok"
@@ -24,7 +24,7 @@ spec = describe "Filter middleware" $ do
     it "rejects non-matching requests" $ do
       let svc :: Service HTTP.Request String
           svc = Service $ \_ -> pure (Right "ok")
-          filtered = withFilter (\_ -> False) svc
+          filtered = withFilter (const False) svc
       req <- HTTP.parseRequest "http://example.com"
       result <- runService filtered req
       result `shouldBe` Left (CustomError "Request filtered out")

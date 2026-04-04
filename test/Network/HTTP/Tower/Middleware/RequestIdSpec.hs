@@ -29,7 +29,7 @@ spec = describe "RequestId middleware" $ do
     _ <- runService svc req
     _ <- runService svc req
     recorded <- readIORef recorder
-    let ids = map (\r -> lookup "X-Request-ID" (HTTP.requestHeaders r)) recorded
+    let ids = map (lookup "X-Request-ID" . HTTP.requestHeaders) recorded
     length ids `shouldBe` 2
     head ids `shouldSatisfy` (/= last ids)
 
