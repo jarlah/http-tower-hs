@@ -1,0 +1,55 @@
+name: http-tower-hs
+version: 0.1.0.0
+synopsis: Composable HTTP client middleware for Haskell, inspired by Rust's Tower
+description: |
+  http-tower-hs provides a composable middleware abstraction for HTTP clients.
+  Build middleware stacks with retry, timeout, logging, and more — all with
+  pure error handling via Either (no exceptions).
+license: MIT
+author: Jarl André Hübenthal
+maintainer: jarlah@users.noreply.github.com
+category: Network
+github: jarls-side-projects/http-tower-hs
+
+dependencies:
+  - base >= 4.14 && < 5
+
+library:
+  source-dirs: src
+  exposed-modules:
+    - Network.HTTP.Tower
+    - Network.HTTP.Tower.Core
+    - Network.HTTP.Tower.Error
+    - Network.HTTP.Tower.Client
+    - Network.HTTP.Tower.Middleware.Retry
+    - Network.HTTP.Tower.Middleware.Timeout
+    - Network.HTTP.Tower.Middleware.Logging
+  dependencies:
+    - http-client
+    - http-client-tls
+    - http-types
+    - text
+    - bytestring
+    - time
+    - safe-exceptions
+
+tests:
+  http-tower-hs-test:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - http-tower-hs
+      - hspec
+      - hspec-discover
+      - QuickCheck
+      - http-client
+      - http-types
+      - text
+      - time
+      - bytestring
+    build-tools:
+      - hspec-discover
