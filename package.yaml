@@ -58,5 +58,14 @@ tests:
       - bytestring
       - stm
       - hs-opentelemetry-api
+      - hs-opentelemetry-sdk
+      - hs-opentelemetry-exporter-in-memory
+      - unagi-chan
+      - process
+      - http-conduit
+      - aeson
+      - vector
+      - hs-opentelemetry-exporter-otlp
+      - http-client-tls
     build-tools:
       - hspec-discover
