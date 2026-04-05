@@ -11,7 +11,7 @@ author: Jarl André Hübenthal
 maintainer: jarlah@users.noreply.github.com
 copyright: 2026 Jarl André Hübenthal
 category: Network
-github: jarls-side-projects/http-tower-hs
+github: jarlah/http-tower-hs
 extra-source-files:
   - README.md
   - CHANGELOG.md
