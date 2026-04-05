@@ -1,5 +1,7 @@
 # http-tower-hs
 
+[![CI](https://github.com/jarlah/http-tower-hs/actions/workflows/ci.yml/badge.svg)](https://github.com/jarlah/http-tower-hs/actions/workflows/ci.yml)
+
 Composable HTTP client middleware for Haskell, inspired by Rust's [Tower](https://docs.rs/tower/latest/tower/).
 
 The Haskell ecosystem has solid HTTP clients (`http-client`, `http-client-tls`) but no middleware composition story. Every project ends up hand-rolling retry logic, timeout handling, and logging around raw HTTP calls. `http-tower-hs` fixes this with a simple `Service`/`Middleware` abstraction.
