@@ -32,7 +32,6 @@ module Network.HTTP.Tower.Client
   ) where
 
 import Control.Exception.Safe (tryAny)
-import Data.Default.Class (def)
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.X509.CertificateStore as X509
 import qualified Network.Connection as Conn
@@ -122,15 +121,16 @@ newClientWithTLS mCaPath mClientCert = do
         Left err   -> fail $ "Failed to load client certificate: " <> err
     Nothing -> pure (TLS.Core.Credentials [])
 
-  let clientParams = (TLS.Core.defaultParamsClient "" mempty)
-        { TLS.Core.clientShared = def
+  let defaults = TLS.Core.defaultParamsClient "" mempty
+      clientParams = defaults
+        { TLS.Core.clientShared = (TLS.Core.clientShared defaults)
             { TLS.Core.sharedCAStore      = caStore
             , TLS.Core.sharedCredentials  = credentials
             }
-        , TLS.Core.clientSupported = def
+        , TLS.Core.clientSupported = (TLS.Core.clientSupported defaults)
             { TLS.Core.supportedCiphers = TLS.Cipher.ciphersuite_default
             }
-        , TLS.Core.clientHooks = def
+        , TLS.Core.clientHooks = (TLS.Core.clientHooks defaults)
             { TLS.Core.onCertificateRequest = \_ ->
                 case credentials of
                   TLS.Core.Credentials (cred:_) -> pure (Just cred)
