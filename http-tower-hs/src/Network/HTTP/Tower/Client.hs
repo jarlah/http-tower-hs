@@ -3,13 +3,15 @@
 -- Description : HTTP client with composable middleware
 -- License     : MIT
 --
--- Create an HTTP client and compose middleware using the @('|>')@ operator:
+-- Create an HTTP client and compose middleware using @'Data.Function.&'@:
 --
 -- @
+-- import Data.Function (('&'))
 -- client <- 'newClient'
--- let configured = client
---       '|>' withRetry (constantBackoff 3 1.0)
---       '|>' withTimeout 5000
+-- let configured = client '&' 'applyMiddleware'
+--       ( withRetry (constantBackoff 3 1.0)
+--       . withTimeout 5000
+--       )
 -- result <- 'runRequest' configured request
 -- @
 --
@@ -150,7 +152,10 @@ runRequest client = runService (clientService client)
 applyMiddleware :: Middleware HTTP.Request HttpResponse -> Client -> Client
 applyMiddleware mw client = client { clientService = mw (clientService client) }
 
--- | Operator for fluent middleware application.
+-- | Operator for fluent middleware application (Rust\/Elixir-style).
+--
+-- Equivalent to using @'Data.Function.&'@ with individual middleware.
+-- Provided for newcomers who prefer a left-to-right pipeline syntax:
 --
 -- @
 -- client <- 'newClient'

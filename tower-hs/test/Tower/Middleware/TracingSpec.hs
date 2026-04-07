@@ -12,6 +12,7 @@ import OpenTelemetry.Trace.Core (InstrumentationLibrary(..))
 import Tower.Service
 import Tower.Error
 import Tower.Error.Testing ()
+import Data.Function ((&))
 import Tower.Middleware.Tracing
 
 spec :: Spec
@@ -23,7 +24,7 @@ spec = describe "Tracing middleware (generic)" $ do
     let config = defaultTracingConfig "test-span"
         svc :: Service () String
         svc = Service $ \_ -> pure (Right "hello")
-        traced = withTracingGlobal testLib config svc
+        traced = svc & withTracingGlobal testLib config
     result <- runService traced ()
     result `shouldBe` Right "hello"
 
@@ -31,7 +32,7 @@ spec = describe "Tracing middleware (generic)" $ do
     let config = defaultTracingConfig "test-span"
         svc :: Service () String
         svc = Service $ \_ -> pure (Left TimeoutError)
-        traced = withTracingGlobal testLib config svc
+        traced = svc & withTracingGlobal testLib config
     result <- runService traced ()
     result `shouldBe` Left TimeoutError
 
@@ -42,7 +43,7 @@ spec = describe "Tracing middleware (generic)" $ do
         svc = Service $ \_ -> do
           modifyIORef' callCount (+ 1)
           pure (Right "ok")
-        traced = withTracingGlobal testLib config svc
+        traced = svc & withTracingGlobal testLib config
     _ <- runService traced ()
     readIORef callCount >>= (`shouldBe` 1)
 
@@ -51,7 +52,7 @@ spec = describe "Tracing middleware (generic)" $ do
           { tracingSpanName = ("span-" <>) }
         svc :: Service Text String
         svc = Service $ \_ -> pure (Right "ok")
-        traced = withTracingGlobal testLib config svc
+        traced = svc & withTracingGlobal testLib config
     result <- runService traced "test"
     result `shouldBe` Right "ok"
 
@@ -61,7 +62,7 @@ spec = describe "Tracing middleware (generic)" $ do
           { tracingReqAttrs = \_ _ -> writeIORef hookCalled True }
         svc :: Service () String
         svc = Service $ \_ -> pure (Right "ok")
-        traced = withTracingGlobal testLib config svc
+        traced = svc & withTracingGlobal testLib config
     _ <- runService traced ()
     readIORef hookCalled >>= (`shouldBe` True)
 
@@ -71,7 +72,7 @@ spec = describe "Tracing middleware (generic)" $ do
           { tracingResAttrs = \_ _ -> writeIORef hookCalled True }
         svc :: Service () String
         svc = Service $ \_ -> pure (Right "ok")
-        traced = withTracingGlobal testLib config svc
+        traced = svc & withTracingGlobal testLib config
     _ <- runService traced ()
     readIORef hookCalled >>= (`shouldBe` True)
 
@@ -81,7 +82,7 @@ spec = describe "Tracing middleware (generic)" $ do
           { tracingResAttrs = \_ _ -> writeIORef hookCalled True }
         svc :: Service () String
         svc = Service $ \_ -> pure (Left (CustomError "fail"))
-        traced = withTracingGlobal testLib config svc
+        traced = svc & withTracingGlobal testLib config
     _ <- runService traced ()
     readIORef hookCalled >>= (`shouldBe` False)
 

@@ -9,7 +9,8 @@
 -- configurable maximum number of hops.
 --
 -- @
--- client '|>' 'withFollowRedirects' 5  -- max 5 hops
+-- import Data.Function (('&'))
+-- svc '&' 'withFollowRedirects' 5  -- max 5 hops
 -- @
 --
 -- Handles 301, 302, 303, 307, and 308. On 303, the method is changed

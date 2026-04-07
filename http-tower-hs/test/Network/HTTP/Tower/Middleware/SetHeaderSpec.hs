@@ -8,6 +8,7 @@ import Test.Hspec
 
 import Network.HTTP.Tower.Client (HttpResponse)
 import Tower.Service
+import Data.Function ((&))
 import Network.HTTP.Tower.Middleware.SetHeader
 import Network.HTTP.Tower.Middleware.TestDouble (withRecorder)
 
@@ -15,7 +16,7 @@ spec :: Spec
 spec = describe "SetHeader middleware" $ do
   it "adds a single header to requests" $ do
     recorder <- newIORef []
-    let svc = withHeader "X-Custom" "value" (withRecorder recorder (Service $ \_ -> pure (Right fakeResponse)))
+    let svc = Service (\_ -> pure (Right fakeResponse)) & withRecorder recorder & withHeader "X-Custom" "value"
     req <- HTTP.parseRequest "http://example.com"
     _ <- runService svc req
     recorded <- readIORef recorder
@@ -24,7 +25,7 @@ spec = describe "SetHeader middleware" $ do
 
   it "adds multiple headers" $ do
     recorder <- newIORef []
-    let svc = withHeaders [("X-A", "1"), ("X-B", "2")] (withRecorder recorder (Service $ \_ -> pure (Right fakeResponse)))
+    let svc = Service (\_ -> pure (Right fakeResponse)) & withRecorder recorder & withHeaders [("X-A", "1"), ("X-B", "2")]
     req <- HTTP.parseRequest "http://example.com"
     _ <- runService svc req
     recorded <- readIORef recorder
@@ -34,7 +35,7 @@ spec = describe "SetHeader middleware" $ do
 
   it "adds Bearer auth header" $ do
     recorder <- newIORef []
-    let svc = withBearerAuth "my-token" (withRecorder recorder (Service $ \_ -> pure (Right fakeResponse)))
+    let svc = Service (\_ -> pure (Right fakeResponse)) & withRecorder recorder & withBearerAuth "my-token"
     req <- HTTP.parseRequest "http://example.com"
     _ <- runService svc req
     recorded <- readIORef recorder
@@ -43,7 +44,7 @@ spec = describe "SetHeader middleware" $ do
 
   it "sets User-Agent header" $ do
     recorder <- newIORef []
-    let svc = withUserAgent "http-tower/0.1" (withRecorder recorder (Service $ \_ -> pure (Right fakeResponse)))
+    let svc = Service (\_ -> pure (Right fakeResponse)) & withRecorder recorder & withUserAgent "http-tower/0.1"
     req <- HTTP.parseRequest "http://example.com"
     _ <- runService svc req
     recorded <- readIORef recorder

@@ -40,6 +40,7 @@ library:
   dependencies:
     - async >= 2.2 && < 2.3
     - hs-opentelemetry-api >= 0.3 && < 0.4
+    - profunctors >= 5.6 && < 5.7
     - stm >= 2.5 && < 2.6
     - text >= 2.0 && < 2.2
     - time >= 1.11 && < 1.15

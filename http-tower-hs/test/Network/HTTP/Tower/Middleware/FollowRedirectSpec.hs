@@ -13,13 +13,14 @@ import Network.HTTP.Tower.Client (HttpResponse)
 import Tower.Service
 import Tower.Error
 import Tower.Error.Testing ()
+import Data.Function ((&))
 import Network.HTTP.Tower.Middleware.FollowRedirect
 
 spec :: Spec
 spec = describe "FollowRedirect middleware" $ do
   it "passes non-redirect responses through" $ do
     let svc = Service $ \_ -> pure (Right (fakeResponseWith HTTP.status200 []))
-        followed = withFollowRedirects 5 svc
+        followed = svc & withFollowRedirects 5
     req <- HTTP.parseRequest "http://example.com"
     result <- runService followed req
     case result of
@@ -36,7 +37,7 @@ spec = describe "FollowRedirect middleware" $ do
               (HTTP.mkStatus 302 "Found")
               [("Location", "http://example.com/redirected")]
             else pure $ Right $ fakeResponseWith HTTP.status200 []
-        followed = withFollowRedirects 5 svc
+        followed = svc & withFollowRedirects 5
     req <- HTTP.parseRequest "http://example.com/original"
     result <- runService followed req
     case result of
@@ -48,7 +49,7 @@ spec = describe "FollowRedirect middleware" $ do
     let svc = Service $ \_ -> pure $ Right $ fakeResponseWith
           (HTTP.mkStatus 301 "Moved")
           [("Location", "http://example.com/loop")]
-        followed = withFollowRedirects 3 svc
+        followed = svc & withFollowRedirects 3
     req <- HTTP.parseRequest "http://example.com/loop"
     result <- runService followed req
     case result of
@@ -65,7 +66,7 @@ spec = describe "FollowRedirect middleware" $ do
               (HTTP.mkStatus 303 "See Other")
               [("Location", "http://example.com/result")]
             else pure $ Right $ fakeResponseWith HTTP.status200 []
-        followed = withFollowRedirects 5 svc
+        followed = svc & withFollowRedirects 5
     req <- HTTP.parseRequest "http://example.com/action"
     let postReq = req { HTTP.method = "POST" }
     _ <- runService followed postReq

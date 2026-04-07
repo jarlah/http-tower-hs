@@ -13,6 +13,7 @@ import Test.Hspec
 import Network.HTTP.Tower.Client (HttpResponse)
 import Tower.Service
 import Tower.Error
+import Data.Function ((&))
 import Network.HTTP.Tower.Middleware.Logging
 
 spec :: Spec
@@ -21,7 +22,7 @@ spec = describe "Logging middleware" $ do
     logRef <- newIORef ([] :: [Text])
     let logger msg = modifyIORef' logRef (msg :)
         svc = Service $ \_ -> pure (Right fakeResponse)
-        logged = withLogging logger svc
+        logged = svc & withLogging logger
     req <- HTTP.parseRequest "http://example.com/test"
     _ <- runService logged req
     logs <- readIORef logRef
@@ -34,7 +35,7 @@ spec = describe "Logging middleware" $ do
     let logger msg = modifyIORef' logRef (msg :)
         svc :: Service HTTP.Request HttpResponse
         svc = Service $ \_ -> pure (Left TimeoutError)
-        logged = withLogging logger svc
+        logged = svc & withLogging logger
     req <- HTTP.parseRequest "http://example.com/fail"
     _ <- runService logged req
     logs <- readIORef logRef
@@ -45,7 +46,7 @@ spec = describe "Logging middleware" $ do
   it "does not alter the result" $ do
     let logger _ = pure ()
         svc = Service $ \_ -> pure (Right fakeResponse)
-        logged = withLogging logger svc
+        logged = svc & withLogging logger
     req <- HTTP.parseRequest "http://example.com/passthrough"
     result <- runService logged req
     case result of

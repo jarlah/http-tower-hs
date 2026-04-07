@@ -4,15 +4,16 @@
 -- License     : MIT
 --
 -- @
+-- import Data.Function (('&'))
 -- -- Replace the service entirely
--- let testClient = client '|>' 'withMock' (\\req -> pure (Right fakeResponse))
+-- let testSvc = svc '&' 'withMock' (\\req -> pure (Right fakeResponse))
 --
 -- -- Route-based mocks
--- let testClient = client '|>' 'withMockMap' mocks
+-- let testSvc = svc '&' 'withMockMap' mocks
 --
 -- -- Record requests for assertions
 -- recorder <- newIORef []
--- let testClient = client '|>' 'withRecorder' recorder
+-- let testSvc = svc '&' 'withRecorder' recorder
 -- @
 module Network.HTTP.Tower.Middleware.TestDouble
   ( withMock
@@ -41,11 +42,12 @@ withMock handler _inner = Service handler
 -- Falls through to the inner service if no match is found.
 --
 -- @
+-- import Data.Function (('&'))
 -- let mocks = Map.fromList
 --       [ (\"api.example.com\/v1\/users\", Right usersResponse)
 --       , (\"api.example.com\/v1\/health\", Right healthResponse)
 --       ]
--- let testClient = client '|>' 'withMockMap' mocks
+-- let testSvc = svc '&' 'withMockMap' mocks
 -- @
 withMockMap
   :: Map ByteString (Either ServiceError HttpResponse)
@@ -60,9 +62,10 @@ withMockMap routes inner = Service $ \req ->
 -- The recorder stores requests in reverse order (most recent first).
 --
 -- @
+-- import Data.Function (('&'))
 -- recorder <- newIORef []
--- let testClient = client '|>' 'withRecorder' recorder
--- _ <- runRequest testClient someRequest
+-- let testSvc = svc '&' 'withRecorder' recorder
+-- _ <- runService testSvc someRequest
 -- recorded <- readIORef recorder
 -- length recorded \`shouldBe\` 1
 -- @

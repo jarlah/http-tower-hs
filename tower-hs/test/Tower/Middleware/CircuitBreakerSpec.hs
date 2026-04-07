@@ -10,6 +10,7 @@ import Test.Hspec
 import Tower.Service
 import Tower.Error
 import Tower.Error.Testing ()
+import Data.Function ((&))
 import Tower.Middleware.CircuitBreaker
 
 spec :: Spec
@@ -24,7 +25,7 @@ spec = describe "Circuit Breaker middleware" $ do
       breaker <- newCircuitBreaker
       let svc :: Service () String
           svc = Service $ \_ -> pure (Right "ok")
-          wrapped = withCircuitBreaker config breaker svc
+          wrapped = svc & withCircuitBreaker config breaker
       result <- runService wrapped ()
       result `shouldBe` Right "ok"
       getCircuitBreakerState breaker >>= (`shouldBe` Closed)
@@ -36,7 +37,7 @@ spec = describe "Circuit Breaker middleware" $ do
           svc = Service $ \_ -> do
             modifyIORef' callCount (+ 1)
             pure (Left (CustomError "fail"))
-          wrapped = withCircuitBreaker config breaker svc
+          wrapped = svc & withCircuitBreaker config breaker
       -- 2 failures, threshold is 3
       _ <- runService wrapped ()
       _ <- runService wrapped ()
@@ -48,7 +49,7 @@ spec = describe "Circuit Breaker middleware" $ do
       breaker <- newCircuitBreaker
       let svc :: Service () String
           svc = Service $ \_ -> pure (Left (CustomError "fail"))
-          wrapped = withCircuitBreaker config breaker svc
+          wrapped = svc & withCircuitBreaker config breaker
       -- 3 failures = threshold
       _ <- runService wrapped ()
       _ <- runService wrapped ()
@@ -62,7 +63,7 @@ spec = describe "Circuit Breaker middleware" $ do
           failSvc = Service $ \_ -> do
             modifyIORef' callCount (+ 1)
             pure (Left (CustomError "fail"))
-          wrapped = withCircuitBreaker config breaker failSvc
+          wrapped = failSvc & withCircuitBreaker config breaker
       -- Trip the breaker
       _ <- runService wrapped ()
       _ <- runService wrapped ()
@@ -80,7 +81,7 @@ spec = describe "Circuit Breaker middleware" $ do
       breaker <- newCircuitBreaker
       let svc :: Service () String
           svc = Service $ \_ -> pure (Left (CustomError "fail"))
-          wrapped = withCircuitBreaker fastConfig breaker svc
+          wrapped = svc & withCircuitBreaker fastConfig breaker
       -- Trip the breaker
       _ <- runService wrapped ()
       _ <- runService wrapped ()
@@ -104,7 +105,7 @@ spec = describe "Circuit Breaker middleware" $ do
             if n < 3
               then pure (Left (CustomError "fail"))
               else pure (Right "recovered")
-          wrapped = withCircuitBreaker fastConfig breaker svc
+          wrapped = svc & withCircuitBreaker fastConfig breaker
       -- Trip the breaker (3 failures)
       _ <- runService wrapped ()
       _ <- runService wrapped ()
@@ -128,7 +129,7 @@ spec = describe "Circuit Breaker middleware" $ do
             if n == 1  -- second call succeeds
               then pure (Right "ok")
               else pure (Left (CustomError "fail"))
-          wrapped = withCircuitBreaker config breaker svc
+          wrapped = svc & withCircuitBreaker config breaker
       -- Fail once
       _ <- runService wrapped ()
       -- Succeed — resets counter

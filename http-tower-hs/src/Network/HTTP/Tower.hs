@@ -4,22 +4,25 @@
 -- License     : MIT
 --
 -- Inspired by Rust's <https://docs.rs/tower/latest/tower/ Tower> crate.
--- Build composable middleware stacks for HTTP clients with the @('|>')@ operator.
+-- Build composable middleware stacks for HTTP clients with @'Data.Function.&'@
+-- and @'applyMiddleware'@, or use the @('|>')@ operator for a pipeline style.
 --
 -- @
+-- import Data.Function (('&'))
 -- import Network.HTTP.Tower
 -- import qualified Network.HTTP.Client as HTTP
 --
 -- main :: IO ()
 -- main = do
 --   client <- 'newClient'
---   let configured = client
---         '|>' 'withBearerAuth' \"my-token\"
---         '|>' 'withRequestId'
---         '|>' 'withRetry' ('constantBackoff' 3 1.0)
---         '|>' 'withTimeout' 5000
---         '|>' 'withValidateStatus' (\\c -> c >= 200 && c < 300)
---         '|>' 'withTracing'
+--   let configured = client '&' 'applyMiddleware'
+--         ( 'withBearerAuth' \"my-token\"
+--         . 'withRequestId'
+--         . 'withRetry' ('constantBackoff' 3 1.0)
+--         . 'withTimeout' 5000
+--         . 'withValidateStatus' (\\c -> c >= 200 && c < 300)
+--         . 'withTracing'
+--         )
 --
 --   req <- HTTP.parseRequest \"https://api.example.com/v1/users\"
 --   result <- 'runRequest' configured req
@@ -35,6 +38,8 @@ module Network.HTTP.Tower
     Service(..)
   , Middleware
   , mapService
+  , contramapService
+  , dimapService
   , composeMiddleware
     -- * Client
   , Client(..)

@@ -10,6 +10,7 @@ import Test.Hspec
 import Tower.Service
 import Tower.Error
 import Tower.Error.Testing ()
+import Data.Function ((&))
 import Tower.Middleware.Hedge
 
 spec :: Spec
@@ -17,7 +18,7 @@ spec = describe "Hedge middleware" $ do
   it "returns result from fast primary without hedging" $ do
     let svc :: Service () String
         svc = Service $ \_ -> pure (Right "fast")
-        hedged = withHedge 1000 svc
+        hedged = svc & withHedge 1000
     result <- runService hedged ()
     result `shouldBe` Right "fast"
 
@@ -31,7 +32,7 @@ spec = describe "Hedge middleware" $ do
               threadDelay 500_000  -- primary: slow
               pure (Right "primary")
             else pure (Right "hedge")  -- hedge: instant
-        hedged = withHedge 50 svc
+        hedged = svc & withHedge 50
     result <- runService hedged ()
     case result of
       Right _ -> pure ()
@@ -44,7 +45,7 @@ spec = describe "Hedge middleware" $ do
           modifyIORef' callCount (+ 1)
           threadDelay 100_000
           pure (Right "done")
-        hedged = withHedge 50 svc
+        hedged = svc & withHedge 50
     _ <- runService hedged ()
     threadDelay 200_000
     count <- readIORef callCount

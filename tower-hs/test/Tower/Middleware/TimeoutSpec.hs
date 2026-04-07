@@ -9,6 +9,7 @@ import Test.Hspec
 import Tower.Service
 import Tower.Error
 import Tower.Error.Testing ()
+import Data.Function ((&))
 import Tower.Middleware.Timeout
 
 spec :: Spec
@@ -16,7 +17,7 @@ spec = describe "Timeout middleware" $ do
   it "allows fast requests through" $ do
     let svc :: Service () String
         svc = Service $ \_ -> pure (Right "fast")
-        timed = withTimeout 1000 svc
+        timed = svc & withTimeout 1000
     result <- runService timed ()
     result `shouldBe` Right "fast"
 
@@ -25,13 +26,13 @@ spec = describe "Timeout middleware" $ do
         svc = Service $ \_ -> do
           threadDelay 500_000  -- 500ms
           pure (Right "slow")
-        timed = withTimeout 100 svc  -- 100ms timeout
+        timed = svc & withTimeout 100  -- 100ms timeout
     result <- runService timed ()
     result `shouldBe` Left TimeoutError
 
   it "preserves errors from inner service" $ do
     let svc :: Service () String
         svc = Service $ \_ -> pure (Left (CustomError "inner error"))
-        timed = withTimeout 1000 svc
+        timed = svc & withTimeout 1000
     result <- runService timed ()
     result `shouldBe` Left (CustomError "inner error")

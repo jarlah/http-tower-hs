@@ -10,6 +10,7 @@ import Test.Hspec
 import Tower.Service
 import Tower.Error
 import Tower.Error.Testing ()
+import Data.Function ((&))
 import Tower.Middleware.Logging
 
 spec :: Spec
@@ -22,7 +23,7 @@ spec = describe "Logging middleware (generic)" $ do
           Left err  -> "ERR: " <> displayError err
         svc :: Service () Text
         svc = Service $ \_ -> pure (Right "done")
-        logged = withLogging formatter logger svc
+        logged = svc & withLogging formatter logger
     _ <- runService logged ()
     logs <- readIORef logRef
     length logs `shouldBe` 1
@@ -36,7 +37,7 @@ spec = describe "Logging middleware (generic)" $ do
           Left err -> "ERR: " <> displayError err
         svc :: Service () Text
         svc = Service $ \_ -> pure (Left TimeoutError)
-        logged = withLogging formatter logger svc
+        logged = svc & withLogging formatter logger
     _ <- runService logged ()
     logs <- readIORef logRef
     length logs `shouldBe` 1
@@ -47,7 +48,7 @@ spec = describe "Logging middleware (generic)" $ do
         formatter _ _ _ = "ignored"
         svc :: Service () Text
         svc = Service $ \_ -> pure (Right "original")
-        logged = withLogging formatter logger svc
+        logged = svc & withLogging formatter logger
     result <- runService logged ()
     result `shouldBe` Right "original"
 
@@ -57,7 +58,7 @@ spec = describe "Logging middleware (generic)" $ do
         formatter req _ _ = "request=" <> req
         svc :: Service Text Text
         svc = Service $ \_ -> pure (Right "ok")
-        logged = withLogging formatter logger svc
+        logged = svc & withLogging formatter logger
     _ <- runService logged "my-request"
     logs <- readIORef logRef
     head logs `shouldBe` "request=my-request"

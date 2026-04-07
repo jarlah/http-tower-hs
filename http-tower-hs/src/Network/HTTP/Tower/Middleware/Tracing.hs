@@ -36,7 +36,8 @@ import Tower.Middleware.Tracing (TracingConfig(..), defaultTracingConfig, withTr
 -- If no TracerProvider is configured, this is a no-op (zero overhead).
 --
 -- @
--- let client' = client |> withTracing
+-- import Data.Function (('&'))
+-- let svc' = svc '&' 'withTracing'
 -- @
 withTracing :: Middleware HTTP.Request HttpResponse
 withTracing inner = Service $ \req -> do

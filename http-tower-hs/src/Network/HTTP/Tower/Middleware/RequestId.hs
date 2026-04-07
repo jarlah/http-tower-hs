@@ -8,8 +8,9 @@
 -- Adds a UUID v4 correlation ID to every request.
 --
 -- @
--- client '|>' 'withRequestId'                          -- X-Request-ID header
--- client '|>' 'withRequestIdHeader' \"X-Correlation-ID\"  -- custom header
+-- import Data.Function (('&'))
+-- svc '&' 'withRequestId'                          -- X-Request-ID header
+-- svc '&' 'withRequestIdHeader' \"X-Correlation-ID\"  -- custom header
 -- @
 module Network.HTTP.Tower.Middleware.RequestId
   ( withRequestId

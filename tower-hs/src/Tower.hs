@@ -7,15 +7,16 @@
 -- Build composable middleware stacks for any service type.
 --
 -- @
+-- import Data.Function (('&'))
 -- import Tower
 --
 -- -- Define a service
 -- let svc = 'Service' $ \\req -> pure (Right (process req))
 --
--- -- Compose middleware
--- let robust = 'withRetry' ('constantBackoff' 3 1.0)
---            . 'withTimeout' 5000
---            $ svc
+-- -- Compose middleware using '&'
+-- let robust = svc
+--            '&' 'withTimeout' 5000
+--            '&' 'withRetry' ('constantBackoff' 3 1.0)
 -- @
 --
 -- All errors are returned as @'Either' 'ServiceError' response@ — no exceptions
@@ -25,6 +26,8 @@ module Tower
     Service(..)
   , Middleware
   , mapService
+  , contramapService
+  , dimapService
   , composeMiddleware
     -- * Errors
   , ServiceError(..)

@@ -13,6 +13,7 @@ module Main where
 
 import Control.Exception (SomeException, try)
 import Data.ByteString (ByteString)
+import Data.Function ((&))
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Database.Redis as Redis
@@ -44,18 +45,18 @@ main = do
         { cbFailureThreshold = 5
         , cbCooldownPeriod   = 30
         }
-      robust = withRetry (constantBackoff 3 0)
-             . withTimeout 5000
-             . withCircuitBreaker config breaker
-             . withValidate (\v ->
-                 if v == "" then Just "empty value" else Nothing)
-             . withLogging
+      robust = getSet
+             & withLogging
                  (\(key, _) result dur -> case result of
                    Right _ -> "Redis SET+GET " <> T.pack (show key)
                               <> " OK (" <> T.pack (show (round (dur * 1000) :: Int)) <> "ms)"
                    Left err -> "Redis ERR: " <> displayError err)
                  T.putStrLn
-             $ getSet
+             & withValidate (\v ->
+                 if v == "" then Just "empty value" else Nothing)
+             & withCircuitBreaker config breaker
+             & withTimeout 5000
+             & withRetry (constantBackoff 3 0)
 
   -- Use the service
   result <- runService robust ("greeting", "Hello from tower-hs!")

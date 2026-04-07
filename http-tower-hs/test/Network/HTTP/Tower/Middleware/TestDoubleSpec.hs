@@ -13,6 +13,7 @@ import Test.Hspec
 import Network.HTTP.Tower.Client (HttpResponse)
 import Tower.Service
 import Tower.Error
+import Data.Function ((&))
 import Network.HTTP.Tower.Middleware.TestDouble
 
 spec :: Spec
@@ -23,7 +24,7 @@ spec = describe "TestDouble middleware" $ do
       let inner = Service $ \_ -> do
             writeIORef innerCalled True
             pure (Right fakeResponse)
-          mocked = withMock (\_ -> pure (Right fakeResponse)) inner
+          mocked = inner & withMock (\_ -> pure (Right fakeResponse))
       req <- HTTP.parseRequest "http://example.com"
       result <- runService mocked req
       case result of
@@ -32,7 +33,7 @@ spec = describe "TestDouble middleware" $ do
       readIORef innerCalled >>= (`shouldBe` False)
 
     it "can return errors" $ do
-      let mocked = withMock (\_ -> pure (Left (CustomError "mock error"))) (Service $ \_ -> pure (Right fakeResponse))
+      let mocked = Service (\_ -> pure (Right fakeResponse)) & withMock (\_ -> pure (Left (CustomError "mock error")))
       req <- HTTP.parseRequest "http://example.com"
       result <- runService mocked req
       case result of
@@ -44,7 +45,7 @@ spec = describe "TestDouble middleware" $ do
       let mocks = Map.fromList
             [ ("example.com/api/users", Right fakeResponse)
             ]
-          mocked = withMockMap mocks (Service $ \_ -> pure (Left (CustomError "not mocked")))
+          mocked = Service (\_ -> pure (Left (CustomError "not mocked"))) & withMockMap mocks
       req <- HTTP.parseRequest "http://example.com/api/users"
       result <- runService mocked req
       case result of
@@ -55,7 +56,7 @@ spec = describe "TestDouble middleware" $ do
       let mocks = Map.fromList
             [ ("example.com/api/users", Right fakeResponse)
             ]
-          mocked = withMockMap mocks (Service $ \_ -> pure (Right fakeResponse))
+          mocked = Service (\_ -> pure (Right fakeResponse)) & withMockMap mocks
       req <- HTTP.parseRequest "http://example.com/api/other"
       result <- runService mocked req
       case result of
@@ -65,7 +66,7 @@ spec = describe "TestDouble middleware" $ do
   describe "withRecorder" $ do
     it "records all requests" $ do
       recorder <- newIORef []
-      let svc = withRecorder recorder (Service $ \_ -> pure (Right fakeResponse))
+      let svc = Service (\_ -> pure (Right fakeResponse)) & withRecorder recorder
       req1 <- HTTP.parseRequest "http://example.com/a"
       req2 <- HTTP.parseRequest "http://example.com/b"
       _ <- runService svc req1
@@ -79,7 +80,7 @@ spec = describe "TestDouble middleware" $ do
       let inner = Service $ \_ -> do
             modifyIORef' innerCalled (+ 1)
             pure (Right fakeResponse)
-          svc = withRecorder recorder inner
+          svc = inner & withRecorder recorder
       req <- HTTP.parseRequest "http://example.com"
       _ <- runService svc req
       readIORef innerCalled >>= (`shouldBe` 1)

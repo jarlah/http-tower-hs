@@ -9,9 +9,10 @@
 -- 'TracingConfig' to control the span name, kind, and attribute extraction.
 --
 -- @
+-- import Data.Function (('&'))
 -- let config = ('defaultTracingConfig' "my-service")
 --       { 'tracingReqAttrs' = \\req s -> addAttribute s "my.attr" (show req) }
--- client |> 'withTracingConfig' tracer config
+-- svc '&' 'withTracingConfig' tracer config
 -- @
 module Tower.Middleware.Tracing
   ( TracingConfig(..)

@@ -8,7 +8,8 @@
 -- Logs HTTP method, host, status code, and duration for each request.
 --
 -- @
--- client '|>' 'withLogging' (\\msg -> Data.Text.IO.putStrLn msg)
+-- import Data.Function (('&'))
+-- svc '&' 'withLogging' (\\msg -> Data.Text.IO.putStrLn msg)
 -- @
 module Network.HTTP.Tower.Middleware.Logging
   ( withLogging

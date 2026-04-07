@@ -8,6 +8,7 @@ import Test.Hspec
 
 import Network.HTTP.Tower.Client (HttpResponse)
 import Tower.Service
+import Data.Function ((&))
 import Network.HTTP.Tower.Middleware.RequestId
 import Network.HTTP.Tower.Middleware.TestDouble (withRecorder)
 
@@ -15,7 +16,7 @@ spec :: Spec
 spec = describe "RequestId middleware" $ do
   it "adds X-Request-ID header" $ do
     recorder <- newIORef []
-    let svc = withRequestId (withRecorder recorder (Service $ \_ -> pure (Right fakeResponse)))
+    let svc = Service (\_ -> pure (Right fakeResponse)) & withRecorder recorder & withRequestId
     req <- HTTP.parseRequest "http://example.com"
     _ <- runService svc req
     recorded <- readIORef recorder
@@ -24,7 +25,7 @@ spec = describe "RequestId middleware" $ do
 
   it "generates unique IDs per request" $ do
     recorder <- newIORef []
-    let svc = withRequestId (withRecorder recorder (Service $ \_ -> pure (Right fakeResponse)))
+    let svc = Service (\_ -> pure (Right fakeResponse)) & withRecorder recorder & withRequestId
     req <- HTTP.parseRequest "http://example.com"
     _ <- runService svc req
     _ <- runService svc req
@@ -35,7 +36,7 @@ spec = describe "RequestId middleware" $ do
 
   it "uses custom header name" $ do
     recorder <- newIORef []
-    let svc = withRequestIdHeader "X-Correlation-ID" (withRecorder recorder (Service $ \_ -> pure (Right fakeResponse)))
+    let svc = Service (\_ -> pure (Right fakeResponse)) & withRecorder recorder & withRequestIdHeader "X-Correlation-ID"
     req <- HTTP.parseRequest "http://example.com"
     _ <- runService svc req
     recorded <- readIORef recorder

@@ -8,9 +8,10 @@
 -- Reject responses that don't meet expectations:
 --
 -- @
--- client '|>' 'withValidateStatus' (\\c -> c >= 200 && c < 300)
--- client '|>' 'withValidateContentType' \"application\/json\"
--- client '|>' 'withValidateHeader' \"X-Request-ID\"
+-- import Data.Function (('&'))
+-- svc '&' 'withValidateStatus' (\\c -> c >= 200 && c < 300)
+-- svc '&' 'withValidateContentType' \"application\/json\"
+-- svc '&' 'withValidateHeader' \"X-Request-ID\"
 -- @
 module Network.HTTP.Tower.Middleware.Validate
   ( withValidateStatus

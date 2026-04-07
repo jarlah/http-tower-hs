@@ -6,9 +6,10 @@
 -- License     : MIT
 --
 -- @
--- client '|>' 'withBearerAuth' \"my-token\"
--- client '|>' 'withUserAgent' \"my-app\/1.0\"
--- client '|>' 'withHeader' \"X-Custom\" \"value\"
+-- import Data.Function (('&'))
+-- svc '&' 'withBearerAuth' \"my-token\"
+-- svc '&' 'withUserAgent' \"my-app\/1.0\"
+-- svc '&' 'withHeader' \"X-Custom\" \"value\"
 -- @
 module Network.HTTP.Tower.Middleware.SetHeader
   ( withHeader

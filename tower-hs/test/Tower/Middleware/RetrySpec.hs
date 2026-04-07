@@ -10,6 +10,7 @@ import Test.QuickCheck
 import Tower.Service
 import Tower.Error
 import Tower.Error.Testing ()
+import Data.Function ((&))
 import Tower.Middleware.Retry
 
 spec :: Spec
@@ -21,7 +22,7 @@ spec = describe "Retry middleware" $ do
           svc = Service $ \_ -> do
             modifyIORef' callCount (+ 1)
             pure (Right "ok")
-          retried = withRetry (constantBackoff 3 0) svc
+          retried = svc & withRetry (constantBackoff 3 0)
       result <- runService retried ()
       result `shouldBe` Right "ok"
       readIORef callCount >>= (`shouldBe` 1)
@@ -32,7 +33,7 @@ spec = describe "Retry middleware" $ do
           svc = Service $ \_ -> do
             modifyIORef' callCount (+ 1)
             pure (Left (CustomError "fail"))
-          retried = withRetry (constantBackoff 3 0) svc
+          retried = svc & withRetry (constantBackoff 3 0)
       result <- runService retried ()
       case result of
         Left (RetryExhausted n _) -> n `shouldBe` 3
@@ -48,7 +49,7 @@ spec = describe "Retry middleware" $ do
             if n < 2
               then pure (Left (CustomError "transient"))
               else pure (Right "recovered")
-          retried = withRetry (constantBackoff 3 0) svc
+          retried = svc & withRetry (constantBackoff 3 0)
       result <- runService retried ()
       result `shouldBe` Right "recovered"
       readIORef callCount >>= (`shouldBe` 3)  -- 2 failures + 1 success
@@ -59,7 +60,7 @@ spec = describe "Retry middleware" $ do
           svc = Service $ \_ -> do
             modifyIORef' callCount (+ 1)
             pure (Left (CustomError "fail"))
-          retried = withRetry (constantBackoff 0 0) svc
+          retried = svc & withRetry (constantBackoff 0 0)
       result <- runService retried ()
       case result of
         Left (RetryExhausted 0 _) -> pure ()

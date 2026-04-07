@@ -16,9 +16,10 @@ Composable service middleware for Haskell, inspired by Rust's [Tower](https://do
 
 ### HTTP client (http-tower-hs)
 
-Generic tower-hs middleware and HTTP-specific middleware compose with the `|>` operator:
+Generic tower-hs middleware and HTTP-specific middleware compose with `(&)` and `(.)` from the standard library:
 
 ```haskell
+import Data.Function ((&))
 import Network.HTTP.Tower
 import qualified Network.HTTP.Client as HTTP
 
@@ -27,17 +28,18 @@ main = do
   client <- newClient
   breaker <- newCircuitBreaker
   let config = CircuitBreakerConfig { cbFailureThreshold = 5, cbCooldownPeriod = 30 }
-      configured = client
-        -- Generic tower-hs middleware
-        |> withRetry (exponentialBackoff 3 0.5 2.0)
-        |> withTimeout 5000
-        |> withCircuitBreaker config breaker
-        -- HTTP-specific middleware
-        |> withBearerAuth "my-api-token"
-        |> withRequestId
-        |> withValidateStatus (\c -> c >= 200 && c < 300)
-        |> withLogging (Data.Text.IO.putStrLn)
-        |> withTracing
+      configured = client & applyMiddleware
+        ( -- Generic tower-hs middleware
+          withRetry (exponentialBackoff 3 0.5 2.0)
+        . withTimeout 5000
+        . withCircuitBreaker config breaker
+          -- HTTP-specific middleware
+        . withBearerAuth "my-api-token"
+        . withRequestId
+        . withValidateStatus (\c -> c >= 200 && c < 300)
+        . withLogging (Data.Text.IO.putStrLn)
+        . withTracing
+        )
 
   req <- HTTP.parseRequest "https://api.example.com/v1/users"
   result <- runRequest configured req
@@ -45,6 +47,13 @@ main = do
     Left err   -> putStrLn $ "Failed: " <> show err
     Right resp -> putStrLn $ "OK: " <> show (HTTP.responseStatus resp)
 ```
+
+> **Note:** tower-hs also provides a `(|>)` operator for a Rust/Elixir-style left-to-right syntax:
+> ```haskell
+> configured = client
+>       |> withRetry (exponentialBackoff 5 0.5 2.0)
+>       |> withTimeout 3000
+> ```
 
 ### Servant client (servant-tower-hs)
 
@@ -82,6 +91,7 @@ result <- runClientM (getUsers <|> getHealth) env
 `tower-hs` is not tied to HTTP -- it works with any `req -> IO (Either ServiceError res)` service. Wrap a database client, a gRPC stub, a message queue, or anything else:
 
 ```haskell
+import Data.Function ((&))
 import Tower
 
 -- Wrap a database query as a Service
@@ -95,10 +105,10 @@ let dbService :: Service SQL.Query [SQL.Row]
 -- Add resilience with the same middleware you'd use for HTTP
 breaker <- newCircuitBreaker
 let config = CircuitBreakerConfig { cbFailureThreshold = 5, cbCooldownPeriod = 30 }
-    robust = withRetry (exponentialBackoff 3 0.5 2.0)
-           . withTimeout 5000
-           . withCircuitBreaker config breaker
-           $ dbService
+    robust = dbService
+           & withCircuitBreaker config breaker
+           & withTimeout 5000
+           & withRetry (exponentialBackoff 3 0.5 2.0)
 
 result <- runService robust "SELECT * FROM users"
 ```
@@ -123,13 +133,16 @@ type Middleware req res = Service req res -> Service req res
 
 ### Client
 
-An HTTP client with a middleware stack, built using the `(|>)` operator:
+An HTTP client with a middleware stack, built using `(&)` and `applyMiddleware`:
 
 ```haskell
+import Data.Function ((&))
+
 client <- newClient
-let configured = client
-      |> withRetry (exponentialBackoff 5 0.5 2.0)
-      |> withTimeout 3000
+let configured = client & applyMiddleware
+      ( withRetry (exponentialBackoff 5 0.5 2.0)
+      . withTimeout 3000
+      )
 ```
 
 ### TLS / mTLS

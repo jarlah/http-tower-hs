@@ -4,11 +4,12 @@
 --
 -- Demonstrates composing generic tower-hs middleware (retry, timeout,
 -- circuit breaker) with HTTP-specific middleware (headers, validation,
--- logging, tracing) using the |> operator.
+-- logging, tracing) using the (&) operator and (.) composition.
 --
 -- Run with: stack run example-http-client
 module Main where
 
+import Data.Function ((&))
 import qualified Data.Text.IO as T
 import qualified Network.HTTP.Client as HTTP
 
@@ -26,17 +27,18 @@ main = do
         { cbFailureThreshold = 5
         , cbCooldownPeriod   = 30
         }
-      configured = client
-        -- Generic tower-hs middleware
-        |> withRetry (exponentialBackoff 3 0.5 2.0)
-        |> withTimeout 10000
-        |> withCircuitBreaker config breaker
-        -- HTTP-specific middleware
-        |> withUserAgent "tower-hs-example/0.1"
-        |> withRequestId
-        |> withValidateStatus (\c -> c >= 200 && c < 300)
-        |> withLogging T.putStrLn
-        |> withTracing
+      configured = client & applyMiddleware
+        ( -- Generic tower-hs middleware
+          withRetry (exponentialBackoff 3 0.5 2.0)
+        . withTimeout 10000
+        . withCircuitBreaker config breaker
+          -- HTTP-specific middleware
+        . withUserAgent "tower-hs-example/0.1"
+        . withRequestId
+        . withValidateStatus (\c -> c >= 200 && c < 300)
+        . withLogging T.putStrLn
+        . withTracing
+        )
 
   -- Make a request
   req <- HTTP.parseRequest "https://httpbin.org/get"

@@ -12,6 +12,7 @@ import Network.HTTP.Tower.Client (HttpResponse)
 import Tower.Service
 import Tower.Error
 import Tower.Error.Testing ()
+import Data.Function ((&))
 import Network.HTTP.Tower.Middleware.Validate
 
 spec :: Spec
@@ -19,7 +20,7 @@ spec = describe "Validate middleware" $ do
   describe "withValidateStatus" $ do
     it "passes valid status codes" $ do
       let svc = Service $ \_ -> pure (Right (fakeResponseWith HTTP.status200 []))
-          validated = withValidateStatus (\c -> c >= 200 && c < 300) svc
+          validated = svc & withValidateStatus (\c -> c >= 200 && c < 300)
       req <- HTTP.parseRequest "http://example.com"
       result <- runService validated req
       case result of
@@ -28,7 +29,7 @@ spec = describe "Validate middleware" $ do
 
     it "rejects invalid status codes" $ do
       let svc = Service $ \_ -> pure (Right (fakeResponseWith HTTP.internalServerError500 []))
-          validated = withValidateStatus (\c -> c >= 200 && c < 300) svc
+          validated = svc & withValidateStatus (\c -> c >= 200 && c < 300)
       req <- HTTP.parseRequest "http://example.com"
       result <- runService validated req
       case result of
@@ -39,7 +40,7 @@ spec = describe "Validate middleware" $ do
     it "passes matching content type" $ do
       let svc = Service $ \_ -> pure (Right (fakeResponseWith HTTP.status200
               [("Content-Type", "application/json; charset=utf-8")]))
-          validated = withValidateContentType "application/json" svc
+          validated = svc & withValidateContentType "application/json"
       req <- HTTP.parseRequest "http://example.com"
       result <- runService validated req
       case result of
@@ -49,7 +50,7 @@ spec = describe "Validate middleware" $ do
     it "rejects non-matching content type" $ do
       let svc = Service $ \_ -> pure (Right (fakeResponseWith HTTP.status200
               [("Content-Type", "text/html")]))
-          validated = withValidateContentType "application/json" svc
+          validated = svc & withValidateContentType "application/json"
       req <- HTTP.parseRequest "http://example.com"
       result <- runService validated req
       case result of
@@ -58,7 +59,7 @@ spec = describe "Validate middleware" $ do
 
     it "rejects missing content type" $ do
       let svc = Service $ \_ -> pure (Right (fakeResponseWith HTTP.status200 []))
-          validated = withValidateContentType "application/json" svc
+          validated = svc & withValidateContentType "application/json"
       req <- HTTP.parseRequest "http://example.com"
       result <- runService validated req
       case result of
@@ -69,7 +70,7 @@ spec = describe "Validate middleware" $ do
     it "passes when header is present" $ do
       let svc = Service $ \_ -> pure (Right (fakeResponseWith HTTP.status200
               [("X-Request-ID", "abc")]))
-          validated = withValidateHeader "X-Request-ID" svc
+          validated = svc & withValidateHeader "X-Request-ID"
       req <- HTTP.parseRequest "http://example.com"
       result <- runService validated req
       case result of
@@ -78,7 +79,7 @@ spec = describe "Validate middleware" $ do
 
     it "rejects when header is missing" $ do
       let svc = Service $ \_ -> pure (Right (fakeResponseWith HTTP.status200 []))
-          validated = withValidateHeader "X-Request-ID" svc
+          validated = svc & withValidateHeader "X-Request-ID"
       req <- HTTP.parseRequest "http://example.com"
       result <- runService validated req
       case result of

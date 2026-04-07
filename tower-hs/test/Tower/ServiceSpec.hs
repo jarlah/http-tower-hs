@@ -6,6 +6,7 @@ import Test.Hspec
 
 import Tower.Service
 import Tower.Error
+import Data.Function ((&))
 import Tower.Error.Testing ()
 
 spec :: Spec
@@ -26,14 +27,14 @@ spec = describe "Core" $ do
     it "transforms successful responses" $ do
       let svc :: Service () Int
           svc = Service $ \_ -> pure (Right 10)
-          mapped = mapService (* 3) svc
+          mapped = svc & mapService (* 3)
       result <- runService mapped ()
       result `shouldBe` Right 30
 
     it "passes through errors unchanged" $ do
       let svc :: Service () Int
           svc = Service $ \_ -> pure (Left TimeoutError)
-          mapped = mapService (* 3) svc
+          mapped = svc & mapService (* 3)
       result <- runService mapped ()
       result `shouldBe` Left TimeoutError
 
