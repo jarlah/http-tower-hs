@@ -141,6 +141,27 @@ let userSvc :: Service UserId User
 let userSvc' = dimapService toHttpRequest parseUser httpSvc
 ```
 
+`Service` is also a `Category` and an `Arrow`, so services can be composed sequentially with `>>>` and wired together using arrow combinators:
+
+```haskell
+import Control.Category ((>>>))
+import Control.Arrow ((&&&), (***))
+
+-- Sequential composition: feed one service's output into the next
+let pipeline :: Service RawInput FinalOutput
+    pipeline = parseInput >>> validate >>> process
+
+-- Extracting results in parallel with (&&&)
+let both :: Service UserId (Profile, Preferences)
+    both = fetchProfile &&& fetchPreferences
+
+-- Applying services to parts of a tuple with (***)
+let paired :: Service (UserId, OrderId) (User, Order)
+    paired = lookupUser *** lookupOrder
+```
+
+`ArrowChoice` is also available, enabling routing over `Either` values with `left`, `right`, and `(|||)`.
+
 ### Middleware
 
 A function that wraps a service to add behavior:

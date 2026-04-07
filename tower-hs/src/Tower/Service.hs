@@ -6,6 +6,10 @@
 -- The fundamental building blocks for composable middleware stacks.
 -- A 'Service' is a function from request to @IO (Either ServiceError response)@,
 -- and 'Middleware' wraps a service to add behavior.
+--
+-- 'Service' forms a 'Category' (sequential composition via '>>>') and an
+-- 'Arrow', so you can use arrow combinators and proc-notation to wire
+-- services together.
 module Tower.Service
   ( Service(..)
   , Middleware
@@ -15,7 +19,10 @@ module Tower.Service
   , composeMiddleware
   ) where
 
+import Control.Arrow (Arrow(..), ArrowChoice(..))
+import Control.Category (Category(..))
 import Data.Profunctor (Profunctor(..))
+import Prelude hiding (id, (.))
 import Tower.Error (ServiceError)
 
 -- | A service transforms a request into an effectful response.
@@ -44,6 +51,31 @@ instance Profunctor Service where
   dimap f g (Service run) = Service $ \req -> fmap (fmap g) (run (f req))
   lmap f (Service run) = Service (run . f)
   rmap = fmap
+
+instance Category Service where
+  id = Service (pure . Right)
+  (Service g) . (Service f) = Service $ \req -> do
+    result <- f req
+    case result of
+      Left err -> pure (Left err)
+      Right mid -> g mid
+
+instance Arrow Service where
+  arr f = Service (pure . Right . f)
+  first (Service f) = Service $ \(a, c) -> do
+    result <- f a
+    case result of
+      Left err -> pure (Left err)
+      Right b -> pure (Right (b, c))
+
+instance ArrowChoice Service where
+  left (Service f) = Service $ \eac -> case eac of
+    Left a -> do
+      result <- f a
+      case result of
+        Left err -> pure (Left err)
+        Right b -> pure (Right (Left b))
+    Right c -> pure (Right (Right c))
 
 -- | Middleware wraps a service to add behavior (retry, timeout, logging, etc.)
 --
