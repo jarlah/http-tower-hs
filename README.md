@@ -141,6 +141,8 @@ let userSvc :: Service UserId User
 let userSvc' = dimapService toHttpRequest parseUser httpSvc
 ```
 
+#### Arrow composition
+
 `Service` is also a `Category`, `Arrow`, and `ArrowChoice`. The built-in middleware
 handles wrapping concerns (retry, timeout, circuit breaker) via `(&)`, but your own
 domain logic — guards, routing, type conversions — can use arrow composition. The two
