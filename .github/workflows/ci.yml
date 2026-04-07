@@ -32,6 +32,7 @@ jobs:
           hpack examples/http-client/
           hpack examples/servant-client/
           hpack examples/generic-redis/
+          hpack examples/arrow-pipeline/
 
       - name: Update Hackage index
         run: cabal update

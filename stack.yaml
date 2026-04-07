@@ -19,6 +19,10 @@ extra-deps:
   - testcontainers-0.5.2.0
   - thread-utils-context-0.3.0.4
   - thread-utils-finalizers-0.1.1.0
+nix:
+  packages:
+    - zlib
+
 allow-newer: true
 allow-newer-deps:
   - hs-opentelemetry-exporter-in-memory

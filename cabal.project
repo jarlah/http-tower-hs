@@ -5,6 +5,7 @@ packages:
   examples/http-client
   examples/servant-client
   examples/generic-redis
+  examples/arrow-pipeline
 
 -- Allow hs-opentelemetry-exporter-in-memory to use newer dependencies
 allow-newer:
