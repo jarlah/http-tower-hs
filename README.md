@@ -124,6 +124,23 @@ A function from request to `IO (Either ServiceError response)`:
 newtype Service req res = Service { runService :: req -> IO (Either ServiceError res) }
 ```
 
+`Service` is a `Functor` (transform responses with `fmap`) and a `Profunctor` (transform both request and response types with `dimap`). This is useful for adapting a generic service to a domain-specific API:
+
+```haskell
+import Data.Function ((&))
+import Data.Profunctor (dimap)
+
+-- Start with a raw HTTP service
+let httpSvc :: Service HTTP.Request (HTTP.Response LBS.ByteString)
+
+-- Adapt to your domain types
+let userSvc :: Service UserId User
+    userSvc = dimap toHttpRequest parseUser httpSvc
+
+-- Or use the named helpers (same thing, more discoverable):
+let userSvc' = dimapService toHttpRequest parseUser httpSvc
+```
+
 ### Middleware
 
 A function that wraps a service to add behavior:
