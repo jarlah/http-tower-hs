@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0.1 — 2026-04-08
+
+- Refactor: derive `Functor`, `Profunctor`, `Category`, `Arrow`, and `ArrowChoice` for `Service` via `Kleisli (ExceptT ServiceError IO)`, to which `Service` is isomorphic. No behavioral or API changes — all instances match the prior hand-written semantics exactly (including `Left` short-circuit on `>>>`, `first`, and `left`).
+- New transitive dependency: `transformers` (GHC boot library).
+
 ## 0.3.0.0 — 2026-04-07
 
 - Add `Category` instance for `Service` — compose services sequentially with `>>>`, errors short-circuit automatically
