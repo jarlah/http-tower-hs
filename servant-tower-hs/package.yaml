@@ -1,5 +1,5 @@
 name: servant-tower-hs
-version: 0.1.1.1
+version: 0.1.2.0
 synopsis: Use tower-hs middleware with servant clients
 description: |
   servant-tower-hs provides an adapter to use tower-hs middleware

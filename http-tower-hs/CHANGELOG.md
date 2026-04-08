@@ -1,8 +1,9 @@
 # Changelog
 
-## 0.3.0.1 — 2026-04-07
+## 0.3.1.0 — 2026-04-08
 
 - Bump `tower-hs` dependency to `>= 0.3.0.0 && < 0.4`
+- Expose `Category`, `Arrow`, and `ArrowChoice` instances for `Service` via re-export — compose services with `>>>`, `arr`, `first`/`second`, and `|||`
 
 ## 0.3.0.0 — 2026-04-07
 

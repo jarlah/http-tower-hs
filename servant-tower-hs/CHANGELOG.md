@@ -1,8 +1,8 @@
 # Changelog
 
-## 0.1.1.1 — 2026-04-07
+## 0.1.2.0 — 2026-04-08
 
-- Bump `tower-hs` dependency to `>= 0.3.0.0 && < 0.4`
+- Bump `tower-hs` dependency to `>= 0.3.0.0 && < 0.4` — users now have access to `Category`, `Arrow`, and `ArrowChoice` instances for `Service`
 
 ## 0.1.1.0 — 2026-04-07
 
