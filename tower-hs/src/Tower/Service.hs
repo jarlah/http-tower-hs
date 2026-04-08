@@ -1,5 +1,4 @@
 {-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE DerivingStrategies #-}
 
 -- |
 -- Module      : Tower.Service
