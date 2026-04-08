@@ -1,3 +1,6 @@
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE DerivingStrategies #-}
+
 -- |
 -- Module      : Tower.Service
 -- Description : Core Service and Middleware abstractions
@@ -9,7 +12,8 @@
 --
 -- 'Service' forms a 'Category' (sequential composition via '>>>') and an
 -- 'Arrow', so you can use arrow combinators and proc-notation to wire
--- services together.
+-- services together. All instances are derived via
+-- @'Kleisli' ('ExceptT' 'ServiceError' 'IO')@, which 'Service' is isomorphic to.
 module Tower.Service
   ( Service(..)
   , Middleware
@@ -19,19 +23,25 @@ module Tower.Service
   , composeMiddleware
   ) where
 
-import Control.Arrow (Arrow(..), ArrowChoice(..))
-import Control.Category (Category(..))
+import Control.Arrow (Arrow, ArrowChoice, Kleisli(..))
+import Control.Category (Category, (.))
+import Control.Monad.Trans.Except (ExceptT(..))
 import Data.Profunctor (Profunctor(..))
+import GHC.IO (IO(..)) -- bring IO's newtype constructor into scope so DerivingVia can coerce through it
 import Prelude hiding (id, (.))
 import Tower.Error (ServiceError)
 
 -- | A service transforms a request into an effectful response.
 -- This is the fundamental building block — middleware wraps services.
 --
--- 'Service' is a 'Functor' in its response type and a 'Profunctor' over
--- both request and response types. Use 'fmap' to transform responses,
--- 'lmap' to transform requests, or 'dimap' to transform both — useful for
--- lifting a @Service Http.Request Http.Response@ into a
+-- 'Service' is isomorphic to @'Kleisli' ('ExceptT' 'ServiceError' 'IO')@,
+-- and all of its instances ('Functor', 'Profunctor', 'Category', 'Arrow',
+-- 'ArrowChoice') are derived from that representation. Composition via
+-- '>>>' short-circuits on the first 'Left'.
+--
+-- Use 'fmap' to transform responses, 'lmap' to transform requests, or
+-- 'dimap' to transform both — useful for lifting a
+-- @Service Http.Request Http.Response@ into a
 -- @Service MyBinding.SomeRequest MyBinding.SomeResponse@.
 --
 -- @
@@ -43,39 +53,9 @@ newtype Service req res = Service
   { runService :: req -> IO (Either ServiceError res)
     -- ^ Execute the service with a request, returning either an error or a response.
   }
-
-instance Functor (Service req) where
-  fmap f (Service run) = Service $ \req -> fmap (fmap f) (run req)
-
-instance Profunctor Service where
-  dimap f g (Service run) = Service $ \req -> fmap (fmap g) (run (f req))
-  lmap f (Service run) = Service (run . f)
-  rmap = fmap
-
-instance Category Service where
-  id = Service (pure . Right)
-  (Service g) . (Service f) = Service $ \req -> do
-    result <- f req
-    case result of
-      Left err -> pure (Left err)
-      Right mid -> g mid
-
-instance Arrow Service where
-  arr f = Service (pure . Right . f)
-  first (Service f) = Service $ \(a, c) -> do
-    result <- f a
-    case result of
-      Left err -> pure (Left err)
-      Right b -> pure (Right (b, c))
-
-instance ArrowChoice Service where
-  left (Service f) = Service $ \eac -> case eac of
-    Left a -> do
-      result <- f a
-      case result of
-        Left err -> pure (Left err)
-        Right b -> pure (Right (Left b))
-    Right c -> pure (Right (Right c))
+  deriving (Functor) via (Kleisli (ExceptT ServiceError IO) req)
+  deriving (Profunctor, Category, Arrow, ArrowChoice)
+    via (Kleisli (ExceptT ServiceError IO))
 
 -- | Middleware wraps a service to add behavior (retry, timeout, logging, etc.)
 --
