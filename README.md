@@ -4,6 +4,27 @@
 
 Composable service middleware for Haskell, inspired by Rust's [Tower](https://docs.rs/tower/latest/tower/).
 
+## Table of contents
+
+- [Packages](#packages)
+- [Quick start](#quick-start)
+  - [HTTP client](#http-client-http-tower-hs)
+  - [Servant client](#servant-client-servant-tower-hs)
+  - [Generic service](#generic-service-tower-hs)
+- [Core concepts](#core-concepts)
+  - [Service](#service)
+  - [Middleware](#middleware)
+  - [Client](#client)
+  - [TLS / mTLS](#tls--mtls)
+- [Middleware](#middleware-1)
+  - [Generic](#generic-tower-hs)
+  - [HTTP-specific](#http-specific-http-tower-hs)
+  - [Servant-specific](#servant-specific-servant-tower-hs)
+- [Error handling](#error-handling)
+- [Showcase](#showcase)
+- [Building](#building)
+- [License](#license)
+
 ## Packages
 
 | Package | Description | Hackage |
