@@ -103,30 +103,22 @@ withCircuitBreaker config (CircuitBreaker var) inner = Service $ \req -> do
       atomically $ do
         internals <- readTVar var
         case result of
-          Right _ -> writeTVar var BreakerInternals
-            { biState         = Closed
-            , biFailureCount  = 0
-            , biLastFailureAt = Nothing
-            }
+          Right _ -> writeBreaker var Closed 0 Nothing
           Left _ ->
             case biState internals of
-              HalfOpen -> writeTVar var BreakerInternals
-                { biState         = Open
-                , biFailureCount  = cbFailureThreshold config
-                , biLastFailureAt = Just now'
-                }
+              HalfOpen -> writeBreaker var Open (cbFailureThreshold config) (Just now')
               _ -> do
                 let newCount = biFailureCount internals + 1
                 if newCount >= cbFailureThreshold config
-                  then writeTVar var BreakerInternals
-                    { biState         = Open
-                    , biFailureCount  = newCount
-                    , biLastFailureAt = Just now'
-                    }
-                  else writeTVar var internals
-                    { biFailureCount  = newCount
-                    , biLastFailureAt = Just now'
-                    }
+                  then writeBreaker var Open newCount (Just now')
+                  else writeBreaker var Closed newCount (Just now')
       pure result
+
+writeBreaker :: TVar BreakerInternals -> CircuitBreakerState -> Int -> Maybe UTCTime -> STM ()                                                      
+writeBreaker var st count mTime = writeTVar var $ BreakerInternals                                                                                  
+  { biState         = st                                                                                                                            
+  , biFailureCount  = count                                                                                                                         
+  , biLastFailureAt = mTime
+  }
 
 data Decision = AllowRequest | RejectRequest
